@@ -3,7 +3,7 @@ export class GamePC {
     height:number
     player:string
     chocolate:number[]
-    poison:{x:number, y:number} = {x:0, y:5};
+    poison:{x:number, y:number} = {x:3, y:3};
     currentHeight:number
     currentWidth:number
 
@@ -21,5 +21,13 @@ export class GamePC {
     this.chocolate[this.poison.x + this.poison.y * this.width] = 1;
   }
 
-  
+  cut(xcoord:number, ycoord:number) {
+    this.currentWidth = (xcoord != -1) ? this.width - xcoord : this.width
+    this.currentHeight = (ycoord != -1) ? this.height - ycoord : this.height
+    this.chocolate = Array.from({length: this.width * this.height}, () => 1);
+    this.poison = {
+      x:0,
+      y:5
+    };
+  }
 }

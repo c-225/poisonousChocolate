@@ -2,8 +2,6 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GamePC } from './gamePC';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-
 
 // -------------------------
 // Three.js Setup and Rendering
@@ -13,16 +11,13 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 const CELL_WIDTH = 1/1.445;
 const CELL_HEIGHT = 1;
 
-let GRID_WIDTH = 7;
-let GRID_HEIGHT = 6;
-
 const chocoTexture = new THREE.TextureLoader().load('/icone_terra.png');
 chocoTexture.encoding = THREE.sRGBEncoding;
 const poisonTexture = new THREE.TextureLoader().load('/poison.jpg')
 poisonTexture.encoding = THREE.sRGBEncoding;
 
 // Initialize Game of Life with empty grid a revoir
-let game:GamePC = new GamePC(GRID_WIDTH, GRID_HEIGHT);
+let game:GamePC = new GamePC (7,3);
 
 // Initialize Three.js Scene
 const scene = new THREE.Scene();
@@ -217,63 +212,60 @@ trapezoid.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
 const material = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
 const poisonTrap = trapezoid.clone()
+poisonTrap.setAttribute('color', new THREE.Float32BufferAttribute(poisonColors, 3));
 
 let maxCells:number;
 let instancedMesh: THREE.InstancedMesh;
 
 // Temporary Object3D for setting instance matrices
 let dummy = new THREE.Object3D();
-let poison
 
 const gball = new THREE.SphereGeometry(0.15, 20, 20)
-let boxes:THREE.Mesh[] = [];
-let wireframes:THREE.LineSegments[] = [];
 
 // Initialize the grid and InstancedMesh
 function initGrid() {   
+    scene.clear()
     // We have to add the light in the init because we are reusing it whenever we cut the chocolate
-    scene.add(light); 
-    poison = game.poison;
+    scene.add(light);
 
-    maxCells = GRID_WIDTH * GRID_HEIGHT;
+    maxCells = game.currentHeight * game.currentWidth;
     instancedMesh = new THREE.InstancedMesh(trapezoid, material, maxCells);
-    let spheres:{x:THREE.Mesh[], y:THREE.Mesh[]} = {x:[], y:[]}
     // Initialize InstancedMesh positions init
     let instanceCount = 0;
-    for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
+    for (let y = 0; y < game.currentHeight; y++) {
+        for (let x = 0; x < game.currentWidth; x++) {
             // Center the grid around (0,0)
             dummy.position.set(
-                x * CELL_WIDTH - GRID_WIDTH / 2 * CELL_WIDTH + CELL_WIDTH / 2,
-                y * CELL_HEIGHT - GRID_HEIGHT / 2 * CELL_HEIGHT + CELL_HEIGHT / 2,
+                x * CELL_WIDTH - game.currentWidth / 2 * CELL_WIDTH + CELL_WIDTH / 2,
+                y * CELL_HEIGHT - game.currentHeight / 2 * CELL_HEIGHT + CELL_HEIGHT / 2,
                 0
             );
-
+            dummy.rotation.set(Math.PI/2, 0, 0)
+            if (x != game.poison.x || y != game.poison.y) dummy.scale.set(1,0.95,1.4); // to make it rectangular
+            else {
+                dummy.scale.set(0,0,0);
+                let poisonMesh = new THREE.Mesh(poisonTrap, material)
+                poisonMesh.position.set(dummy.position.x, dummy.position.y, 0);
+                poisonMesh.rotation.set(Math.PI/2, 0, 0);
+                poisonMesh.scale.set(1,0.95,1.445);
+                scene.add(poisonMesh);
+            }
+            
             //create a wireframe for the trapezoid
             const wireframe = new THREE.LineSegments(
                 new THREE.EdgesGeometry(trapezoid),
                 new THREE.LineBasicMaterial({ color: 0x000000 })
             );
+
             wireframe.position.set(dummy.position.x, dummy.position.y, 0);
             wireframe.rotation.set(Math.PI/2, 0, 0);
             wireframe.scale.set(1,1,1.445); // to make it more like a chocolate bar
 
             scene.add(wireframe);
 
-            dummy.rotation.set(Math.PI/2, 0, 0)
-            if (x != poison.x || y != poison.y) dummy.scale.set(1,0.95,1.4); // to make it more like a chocolate bar
-            else {
-                dummy.scale.set(0,0,0);
-                poisonTrap.setAttribute('color', new THREE.Float32BufferAttribute(poisonColors, 3));
-                let poisonMesh = new THREE.Mesh(poisonTrap, material)
-                poisonMesh.position.set(dummy.position.x, dummy.position.y, 0);
-                poisonMesh.rotation.set(Math.PI/2, 0, 0);
-                poisonMesh.scale.set(1,0.95,1.445); // to make it more like a chocolate bar
-                scene.add(poisonMesh);
-            }
             dummy.updateMatrix();
 
-            const cube = new THREE.Mesh( geometry, (x == poison.x && y == poison.y) ? poisontop : chocotop ); 
+            const cube = new THREE.Mesh( geometry, (x == game.poison.x && y == game.poison.y) ? poisontop : chocotop ); 
             cube.position.set(dummy.position.x, dummy.position.y, 0.385);
             cube.scale.set(0.4, 0.58, 1)
             scene.add(cube);
@@ -284,63 +276,50 @@ function initGrid() {
     scene.add(instancedMesh);
 
     // Create the dots that we will interact with
-    for (let y = 1; y < GRID_HEIGHT; y++) {
+    for (let y = 1; y < game.currentHeight; y++) {
         const sphere = new THREE.Mesh(gball, material);
         sphere.name = {xcoord: -1, ycoord: y};
         sphere.layers.set(1);
         const sphere2 = sphere.clone();
         sphere.position.set(
-            -GRID_WIDTH / 2 * CELL_WIDTH - CELL_WIDTH/2+ CELL_WIDTH/5,
-            y * CELL_HEIGHT - GRID_HEIGHT / 2 * CELL_HEIGHT,
+            -game.currentWidth / 2 * CELL_WIDTH - CELL_WIDTH/2+ CELL_WIDTH/5,
+            y * CELL_HEIGHT - game.currentHeight / 2 * CELL_HEIGHT,
             0
         );
-        spheres.y.push(sphere);
-        spheres.y.push(sphere2);
+        //spheres.y.push(sphere , sphere2);
+        scene.add(sphere, sphere2);
         sphere2.position.set(-sphere.position.x, sphere.position.y, 0);
-        scene.add(sphere);
-        scene.add(sphere2);
     }
-    for (let x = 1; x < GRID_WIDTH; x++) {
+    
+    for (let x = 1; x < game.currentWidth; x++) {
         const sphere = new THREE.Mesh(gball, material);
         sphere.name = {xcoord: x, ycoord: -1};
         sphere.layers.set(1);
         const sphere2 = sphere.clone();
         sphere.position.set(
-            x * CELL_WIDTH - GRID_WIDTH / 2 * CELL_WIDTH,
-            -GRID_HEIGHT / 2 * CELL_HEIGHT - CELL_HEIGHT/2 + CELL_WIDTH/2.5,
+            x * CELL_WIDTH - game.currentWidth / 2 * CELL_WIDTH,
+            -game.currentHeight / 2 * CELL_HEIGHT - CELL_HEIGHT/2 + CELL_WIDTH/2.5,
             0
         );
-        spheres.x.push(sphere);
-        spheres.x.push(sphere2);
         sphere2.position.set(sphere.position.x, -sphere.position.y, 0);
-        scene.add(sphere);
-        scene.add(sphere2);
+        scene.add(sphere, sphere2);
+
+        //spheres.x.push(sphere , sphere2);
     }
+    //spheres.y.forEach(sphere => { scene.add(sphere); })
+    //spheres.x.forEach(sphere => { scene.add(sphere); })
     camera.layers.enable(1);
 }
 
 function cut(xcoord:number, ycoord:number) {
-    scene.clear()
-    if (xcoord != -1 ) {
-        if (poison.x >= xcoord){
-            GRID_WIDTH = GRID_WIDTH - xcoord;
-            poison.x -= xcoord;
-        }
-        else {
-            GRID_WIDTH = GRID_WIDTH - (GRID_WIDTH - xcoord);
-        }
-    }
-    else if (ycoord != -1) {
-        if (poison.y >= ycoord){
-            GRID_HEIGHT = GRID_HEIGHT - ycoord;
-            poison.y -= ycoord;
-        }
-        else {
-            GRID_HEIGHT = GRID_HEIGHT - (GRID_HEIGHT - ycoord);
-        }
-    }
-    initGrid();
+    game.cut(xcoord, ycoord);
     instancedMesh.instanceMatrix.needsUpdate = true;
+    initGrid();
+    game.wait(1000).then(() => {
+        game.adversaryPlay();
+        instancedMesh.instanceMatrix.needsUpdate = true;
+        initGrid();
+    })
 }
 
 // 1. Set up raycaster and mouse vector
@@ -370,14 +349,28 @@ renderer.domElement.addEventListener('click', (event:any) => {
 
 // Start the animation loop immediately
 initGrid();
-animate();
 
 //cut(2, -1,);
 // Animation Loop
+
+//var Time:number = 0
+let once = false
+
 function animate() {
     requestAnimationFrame(animate);
     controls.update(); // Update camera controls
     renderer.render(scene, camera);
+
+    
+    // delay each animation by 1s
+
+    //if (Time % 10 === 0) {
+    //    game.changePoison("border");
+    //    instancedMesh.instanceMatrix.needsUpdate = true;
+    //    initGrid();
+    //}
+    //Time += 1;
+    
 }
 
 animate();

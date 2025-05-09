@@ -1,13 +1,75 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html> 
+<html lang='en'> 
+<head> 
+    <meta charset='UTF-8'> 
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'> 
+    <link rel='stylesheet' href='/framework/css/style.css'>
+    <link rel='stylesheet' href='/framework/css/BannerStyle.css'>
+    <link rel='stylesheet' href="framework/css/ModalStyle.css">
+    <script src='/framework/js/framework.js' type='module'></script> 
+    <script src='/framework/js/createScene.js' type='module'></script> 
+    <script src='/framework/js/table.js' type='module'></script> 
+    <script src='/framework/js/CTABanner.js' type='module'></script>  
     <title>Jeu de la tablette de chocolat</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/js/main.ts"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle"> 
+    <div class="modal-container">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 id="helpModalTitle">Comment jouer ?</h2>
+        <button id="closeHelpModal" aria-label="Close Help Modal">
+          <i class="fas fa-times fa-lg"></i>
+        </button>
+      </div>
+  
+      <!-- Modal Body -->
+      <div class="modal-body scrollable">
+        <p class="modal-text">
+          Bienvenue dans le <strong>Jeu du chocolat empoisonné</strong> ! C'est un jeu à deux joueurs qui fonctionne ainsi :
+        </p>
+        <ul class="modal-list">
+          <li><strong>Poison : </strong> Parmi les carreaux de chocolat, il y en a un qui est empoisonné.</li>
+          <li><strong>Objectif :</strong> Découper le chocolat horizontalement ou verticalement pour laisser votre adversaire avec le carreau empoisonné.</li>
+        </ul>
+        <p class="modal-text">
+          Utilisez les contrôles pour affronter une IA, ou jouer contre un ami, vous pouvez aussi agrandir ou réduire le chocolat en utilisant le bouton "redimensionner".
+        </p>
+      </div>
+  
+    </div>
+  </div>
+  
+  <!-- Winning screen -->
+  <div id="screenWin" class="screen-win" role="dialog" aria-modal="true" aria-labelledby="screenWinTitle">
+    <div class="modal-container">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 id="screenWinTitle">Fin de la partie</h2>
+        <button id="closescreenWin" aria-label="Close end screen">
+          <i class="fas fa-times fa-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <p id="reussite" class="modal-text"></p>
+        <p id="commentaire" class="modal-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player -->
+  <div id="currentPlayer" class="currentPlayer">
+    Tour : Joueur 1
+  </div>
+
+</body> 
 </html>

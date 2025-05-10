@@ -5,7 +5,8 @@ export class GamePC {
     adversary:string
     undoStack:{height:number, width:number, poison:{x:number, y:number}}[]
     redoStack:{height:number, width:number, poison:{x:number, y:number}}[]
-    poison:{x:number, y:number} = {x:4, y:1};
+    poison:{x:number, y:number}
+    absolutePoison:{x:number, y:number}
     currentHeight:number
     currentWidth:number
 
@@ -14,8 +15,10 @@ export class GamePC {
     this.height = height;
     this.player = "Joueur 1";
     this.adversary = "Joueur 2";
-    this.currentHeight = this.height;
-    this.currentWidth = this.width;
+    this.poison = {x:width-1, y:height-1};
+    this.absolutePoison = {...this.poison}
+    this.currentHeight = height;
+    this.currentWidth = width;
     this.undoStack = [];
     this.redoStack = [];
   }
@@ -42,12 +45,13 @@ export class GamePC {
       }
     }
     else if (type === "corner"){
-      xcoord = this.currentWidth - 1;
-      ycoord = this.currentHeight - 1;
+      xcoord = (Math.random()*2 > 1)? this.currentWidth - 1 : 0;
+      ycoord = (Math.random()*2 > 1)? this.currentHeight - 1 : 0;
     }
 
     this.poison.x = xcoord;
     this.poison.y = ycoord;
+    this.absolutePoison = {...this.poison}
   }
 
   cut(xcoord:number, ycoord:number) {
@@ -72,7 +76,6 @@ export class GamePC {
     }
 
     if (this.adversary.startsWith("Joueur")) {
-      console.log("switch")
       let temp = this.adversary
       this.adversary = this.player
       this.player = temp
@@ -104,23 +107,22 @@ export class GamePC {
   reset(){
     this.currentHeight = this.height;
     this.currentWidth = this.width;
-    this.poison.x = 4;
-    this.poison.y = 1;
     this.undoStack = [];
     this.redoStack = [];
+    this.poison = {...this.absolutePoison}
   }
 
   changeAdversary(adversary:string) {
-    this.adversary = adversary;
+    this.adversary = adversary
   }
 
   adversaryPlay() {
     //await this.wait(1000); // to avoid having the ai play too fast we add a delay of 1 second
-    if (this.adversary === "HardAI") {
+    if (this.adversary === "IA difficile") {
       this.hardMode();
     }
 
-    else if (this.adversary === "AI") {
+    else if (this.adversary === "IA facile") {
       this.easyMode();
     }
 
@@ -134,7 +136,6 @@ export class GamePC {
     let distBottom = this.poison.y;
     let distLeft = this.poison.x;
     let distRight = this.currentWidth - this.poison.x - 1;
-    //console.log(`distTop: ${distTop}, distBottom: ${distBottom}, distLeft: ${distLeft}, distRight: ${distRight}`);
 
     let doubleSymetry = (distBottom === distTop && distLeft !== distRight || distLeft === distRight && distTop !== distBottom)
     let diagonalSymetry = (distTop === distLeft && distBottom !== distRight ||
@@ -142,7 +143,6 @@ export class GamePC {
                            distBottom === distLeft && distTop !== distRight ||
                            distBottom === distRight && distTop !== distLeft )
     // this part maintains the symetry of the grid on both the x and y axis
-    console.log(diagonalSymetry, doubleSymetry)
     if (distBottom === distTop && distRight === distLeft || !doubleSymetry && !diagonalSymetry) {
       //the grid has a central symetry so we can't do anything but expect a mistake from the player
       this.randomMove()
@@ -150,7 +150,6 @@ export class GamePC {
     }
 
     else if (doubleSymetry) {
-      if (doubleSymetry) console.log("a double symetry is possible")
       this.currentWidth = 2 * Math.min(distLeft, distRight) + 1;
       this.currentHeight = 2 * Math.min(distTop, distBottom) + 1;
       this.poison = {
@@ -159,78 +158,41 @@ export class GamePC {
       }     
     }
     else if(diagonalSymetry){
-      if (diagonalSymetry) console.log("a diagonal is possible")
       this.currentWidth = Math.min(distLeft + distRight + 1, distTop + distBottom + 1);
       this.currentHeight = this.currentWidth;
       this.poison = {
         x: (distRight < distLeft)? this.currentWidth - distRight - 1 : this.poison.x,
         y: (distBottom < distTop)? this.currentHeight - distTop - 1 : this.poison.x
       }
-      console.log(this.poison)
     }
     else {
       if (distTop + distBottom < distLeft + distRight) {
-        console.log("cut top or bottom idk");
         this.poison.y = Math.floor(this.currentHeight / 2)
         this.currentHeight = 2 * Math.min(distTop, distBottom) + 1;
       }
       else if (distLeft + distRight < distTop + distBottom) {
-        console.log("cut left or right idk");
         this.poison.x = Math.floor(this.currentWidth / 2)
         this.currentWidth = 2 * Math.min(distLeft, distRight) + 1;
       }
-    }
-    // this part maintains the symetry of the grid on a diagonal axis
-//    else if () {
-//      console.log("a diagonal symetry is possible")
-//      if (distTop < distLeft) {
-//        console.log("cut left");
-//        this.cut(distLeft - distTop, -1);
-//      }
-//      else if (distTop > distLeft){
-//        console.log("cut bottom right");
-//        this.cut(-1, this.currentHeight - ( distTop - distLeft));
-//      }
-//      else if (distBottom < distRight) {
-//        console.log("cut bottom right");
-//        this.cut(-1, distRight - distBottom);
-//      }
-//      else if (distRight < distBottom) {
-//        console.log("cut top left");
-//        this.cut(this.currentWidth - ( distRight - distBottom), -1);
-//      }
-//      else if (distTop < distRight) {
-//        console.log("cut top right");
-//        this.cut(-1, distRight - distTop);
-//      }
-//      else if (distTop > distRight) {
-//        console.log("cut bottom left");
-//        this.cut(distRight - distTop, -1);
-//      }
-//      else if (distBottom < distLeft) {
-//        console.log("cut bottom left");
-//        this.cut(distLeft - distBottom, -1);
-//      }
-//      else if (distBottom > distLeft) {
-//        console.log("cut top right");
-//        this.cut(-1, this.currentHeight - ( distBottom - distLeft));
-//      }
-//    }
-    
+    }    
   }
+
   randomMove(){
     console.log("random move")
       let random = Math.floor(Math.random()*2)
-      if (random === 0 && this.currentHeight > 1 || this.currentWidth === 0) { this.currentHeight -= 1 }
-      else { this.currentWidth -=1 }
-      console.log(this.currentHeight , this.currentWidth)
+      if (random === 0 && this.currentHeight > 1 || this.currentWidth === 1) {
+        this.currentHeight--
+        if (this.poison.y > 0) this.poison.y--
+      }
+      else if (this.currentWidth > 1 ) {
+        this.currentWidth--
+        if (this.poison.x > 0) this.poison.x--
+      }
   }
 
   easyMode() {// the ai will play in a semi-random way
     if (Math.random() < 0.3334) this.hardMode()
-    else {
-      this.randomMove()
-    }
+    else this.randomMove()
   }
 
   wait(ms:number) {

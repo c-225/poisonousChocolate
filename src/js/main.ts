@@ -20,20 +20,23 @@ const permanentModalControls = md.getPermanentModal({
 // Now call addButton on the returned controls
 permanentModalControls.addButton(
     "Mode 2 Joueurs",
-    () => {
-        if (!(game.adversary === "AI" || game.adversary === "HardAI")) return
-        reset();
-        game.changeAdversary("Joueur 2");
-        initGrid();}
+    () => { changeAdversary("Joueur 2"); }
 );
 permanentModalControls.addButton(
     "Contre IA facile",
-    () => {reset(); game.changeAdversary("AI"); initGrid();}, 
+    () => { changeAdversary("IA facile"); }, 
 );
 permanentModalControls.addButton(
     "Contre IA difficile",
-    () => {reset(); game.changeAdversary("HardAI"); initGrid();}, 
+    () => { changeAdversary("IA difficile"); }, 
 );
+permanentModalControls.addButton(
+    "L'IA commence", 
+    () => {
+        if (game.adversary.startsWith("IA")){
+        cut(-1,-1)
+    }}
+)
 
 ctaBanner.create_button({ 
     text: "Règles",
@@ -56,8 +59,10 @@ ctaBanner.create_button({
     onClick: () => {reset()}
 });
 ctaBanner.create_button({ 
-    text: "L'IA commence", 
-    onClick: () => {cut(-1,-1)}
+    text: "Placer poison", 
+    onClick: () => {
+        poisonScreen.style.display = "flex"
+    }
 });
 // -------------------------
 // Three.js Setup and Rendering
@@ -67,16 +72,7 @@ ctaBanner.create_button({
 const CELL_WIDTH = 1/1.445;
 const CELL_HEIGHT = 1;
 
-const chocoTexture = new THREE.TextureLoader().load(
-    '/icone_terra.png',
-    (texture) => {
-      console.log('Texture loaded:', texture);
-    },
-    undefined,
-    (err) => {
-      console.error('Error loading texture:', err);
-    }
-  );
+const chocoTexture = new THREE.TextureLoader().load('/icone_terra.png');
 const poisonTexture = new THREE.TextureLoader().load('/poison.jpg');
 // Initialize Game of Life with empty grid a revoir
 let game:GamePC = new GamePC (7,4);
@@ -97,11 +93,11 @@ const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    500
 );
 
 // Position the camera so that the entire grid is visible
-camera.position.set(0, 0, 15);
+camera.position.set(0, 0, 5);
 // Make the camera look at the center of the grid
 camera.lookAt(0, 0, 0);
 
@@ -247,7 +243,8 @@ const poisonFaceColors = [
    
     DarkGrey, // Face 18 - side
     DarkGrey, // Face 19 - side
- ];
+];
+
 const colors: number[] = [];
 const position = trapezoid.attributes.position;
 
@@ -373,15 +370,15 @@ function initGrid() {
     camera.layers.enable(1);
 }
 
-function over():boolean {
+function over(Joueur:string):boolean {
     instancedMesh.instanceMatrix.needsUpdate = true;
     initGrid();
     let condition = (game.currentHeight * game.currentWidth === 1)
     if (condition){
         winScreen.style.display = 'flex';
-        if (!game.adversary.startsWith("Joueur")) winComment.innerHTML = `Bravo, vous avez gagné !`;
-        else if (game.player.startsWith("Joueur")) winComment.innerHTML = `Le ${game.adversary} a gagné !`;
-        else winComment.innerHTML = `Dommage, l'IA a gagné !`;
+        if (Joueur === "A") { winComment.innerHTML = `Dommage, l'IA a gagné !`;}
+        else if (game.adversary.startsWith("Joueur")) winComment.innerHTML = `Le ${game.adversary} a gagné !`;
+        else winComment.innerHTML = `Bravo, vous avez gagné !`;
     }
     else {      
         instancedMesh.instanceMatrix.needsUpdate = true;
@@ -392,12 +389,11 @@ function over():boolean {
 
 function cut(xcoord:number, ycoord:number) {
     game.cut(xcoord, ycoord);
-    if (over()) return
+    if (over("J")) return
     currentPlayer.innerHTML = `Tour : ${game.player}`
-    
     game.wait(1000).then(() => {
         game.adversaryPlay();
-        over() 
+        over("A") 
     })
 }
 
@@ -420,14 +416,41 @@ function reset() {
     initGrid();
 }
 
+function changeAdversary(newOpp: string){
+    let gameMode = ""
+    if (newOpp.startsWith('IA')) gameMode = `Mode : ${newOpp}`
+    else gameMode = `Mode : un contre un`
+    if (gameMode === adversary.innerHTML) return
+
+    game.changeAdversary(newOpp)
+    adversary.innerHTML = gameMode
+    reset();
+    initGrid();
+
+}
+
+function resize(){
+}
+
 // Help Modal Elements
 const helpModal = document.getElementById('helpModal') as HTMLDivElement;
 const closeHelpModal = document.getElementById('closeHelpModal') as HTMLButtonElement;
+
 // Win popup elements
 const winScreen = document.getElementById('screenWin') as HTMLDivElement;
-const currentPlayer = document.getElementById('currentPlayer') as HTMLDivElement;
 const winComment = document.getElementById('commentaire') as HTMLDivElement;
 const closeWinScreen = document.getElementById('closescreenWin') as HTMLButtonElement;
+
+// Poison placement elements
+const poisonScreen = document.getElementById("changePoison") as HTMLDivElement;
+const closePoisonScreen = document.getElementById('closePoisonChoice') as HTMLButtonElement;
+const cornerPoison = document.getElementById('btnCoin') as HTMLButtonElement;
+const edgePoison = document.getElementById('btnBord') as HTMLButtonElement;
+const randomPoison = document.getElementById('btnHasard') as HTMLButtonElement;
+
+// Gameplay info
+const currentPlayer = document.getElementById('currentPlayer') as HTMLDivElement;
+const adversary = document.getElementById('adversary') as HTMLDivElement;
 
 // Function to Show the Help Modal
 function showHelpModal() {
@@ -461,6 +484,27 @@ closeWinScreen.addEventListener('click', () => {
     reset()
 });
 
+closePoisonScreen.addEventListener('click', () => {
+    poisonScreen.style.display = 'none';
+})
+
+edgePoison.addEventListener('click', () => {
+    game.changePoison('border');
+    poisonScreen.style.display = 'none';
+    reset()
+})
+
+cornerPoison.addEventListener('click', () => {
+    game.changePoison('corner');
+    poisonScreen.style.display = 'none';
+    reset()
+})
+
+randomPoison.addEventListener('click', () => {
+    game.changePoison('random');
+    poisonScreen.style.display = 'none';
+    reset()
+})
 
 // 1. Set up raycaster and mouse vector
 const raycaster = new THREE.Raycaster();

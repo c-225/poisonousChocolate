@@ -4,7 +4,8 @@ body {
 }
 
 .screen-win,
-.help-modal {
+.help-modal,
+.poison-edit {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
@@ -13,14 +14,15 @@ body {
   display: none;
 }
 
-/* Use an additional class (e.g. .active) to show the modals */
-/* .screen-win.active, .help-modal.active {
-  display: flex;
-} */
+.modal-button {
+  background-color: #1f2937;
+}
+
 
 /* Center modals when visible */
 .screen-win,
-.help-modal {
+.help-modal,
+.poison-edit {
   align-items: center;
   justify-content: center;
 }
@@ -120,14 +122,19 @@ body {
   color: #d1d5db;
 }
 
-.currentPlayer {
+.playerContainer {
   position: fixed;
   bottom: 1.25rem; /* équivalent à bottom-5 (~20px) */
   right: 1.25rem;
+}
+
+.currentPlayer {
+  margin: 2px;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   font-size: 0.875rem; /* équivalent à text-sm */
   padding: 0.5rem;
   border-radius: 0.375rem; /* équivalent à rounded (~6px) */
   z-index: 40;
+  text-align: center;
 }

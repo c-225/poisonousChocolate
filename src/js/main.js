@@ -21,7 +21,7 @@
 import Framework from '../../framework/js/framework.js';
 
 const fw = new Framework();
-fw.addButtonToNavbar({textButton : "Rules",     onclickFunction: () => alert("Hello World")});
+fw.addButtonToNavbar({textButton : "Rules", onclickFunction: () => alert("Hello World")});
 const modal1 = fw.getPermanentModal({
     title: "titre",
     position: { top: 10, right: 10 },
@@ -32,8 +32,6 @@ const modal1 = fw.getPermanentModal({
 //rajouer un bouton dans le modal avec la méthode addButton
 modal1.AddButtonToModal("Button 1", () => alert("Hello World"));
 
-
-
 const scene = fw.mainParameters.scene;
 const renderer = fw.mainParameters.renderer;
 const camera = fw.mainParameters.camera;
@@ -42,7 +40,6 @@ fw.startLoadingScreen();
 fw.removeLoadingScreen();
 fw.onResize();
 fw.addSimpleSceneWithTable();
-
 
 // La fonction animate utilisera la mise à jour du framework
 function animate() {

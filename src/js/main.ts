@@ -48,10 +48,10 @@ ctaBanner.create_button({
 });
 ctaBanner.create_button({ 
     text: "Refaire coup",
-    onClick: () => {redo();}, 
+    onClick: () => {redo();},
 });
 ctaBanner.create_button({ 
-    text: "Redimensionner", 
+    text: "Redimensionner",
     onClick: () => {}// a revoir
 });
 ctaBanner.create_button({ 
